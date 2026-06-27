@@ -2,11 +2,18 @@
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 import { Boundary } from '../types';
 
-if (!process.env.API_KEY) {
-  throw new Error("API_KEY environment variable not set");
-}
+let aiClient: GoogleGenAI | null = null;
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+function getAiClient(): GoogleGenAI {
+  if (!aiClient) {
+    const key = process.env.API_KEY || process.env.GEMINI_API_KEY;
+    if (!key) {
+      throw new Error("API_KEY environment variable not set. Please provide it in the environment.");
+    }
+    aiClient = new GoogleGenAI({ apiKey: key });
+  }
+  return aiClient;
+}
 
 const responseSchema = {
   type: Type.ARRAY,
@@ -51,6 +58,7 @@ Output strict JSON. Prioritize separation of adjacent items and archival edge pr
 
 export async function findPhotoBoundaries(imageBase64: string, mimeType: string): Promise<Boundary[]> {
   try {
+    const ai = getAiClient();
     const response: GenerateContentResponse = await ai.models.generateContent({
       model: 'gemini-3.1-pro-preview',
       contents: { 
@@ -78,14 +86,18 @@ export async function findPhotoBoundaries(imageBase64: string, mimeType: string)
       ...b,
       id: `boundary-${Date.now()}-${i}`
     }));
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini Detection Error:", error);
+    if (error.message?.includes("API_KEY environment variable not set")) {
+      throw error;
+    }
     throw new Error("Precision detection failed. Please check the scan quality and try again.");
   }
 }
 
 export async function restorePhoto(imageBase64: string, mimeType: string): Promise<string> {
   try {
+    const ai = getAiClient();
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
       contents: {
@@ -101,7 +113,11 @@ export async function restorePhoto(imageBase64: string, mimeType: string): Promi
       return `data:image/png;base64,${imagePart.inlineData.data}`;
     }
     throw new Error("No image returned");
-  } catch (error) {
+  } catch (error: any) {
+    console.error("Gemini Restoration Error:", error);
+    if (error.message?.includes("API_KEY environment variable not set")) {
+      throw error;
+    }
     throw new Error("AI Restoration failed.");
   }
 }
