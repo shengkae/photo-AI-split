@@ -52,7 +52,7 @@ Output strict JSON. Prioritize separation of adjacent items and archival edge pr
 export async function findPhotoBoundaries(imageBase64: string, mimeType: string): Promise<Boundary[]> {
   try {
     const response: GenerateContentResponse = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-3.1-pro-preview',
       contents: { 
         parts: [
           { inlineData: { data: imageBase64, mimeType } },
