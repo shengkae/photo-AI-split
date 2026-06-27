@@ -5,7 +5,7 @@ import PhotoDisplay from './components/PhotoDisplay';
 import SplitPhotoGallery from './components/SplitPhotoGallery';
 import Spinner from './components/Spinner';
 import { MagicWandIcon, CropIcon, AddIcon, UndoIcon, RedoIcon, RotateIcon } from './components/Icons';
-import { findPhotoBoundaries, restorePhoto } from './services/geminiService';
+import { findPhotoBoundaries, restorePhoto, setApiKey } from './services/geminiService';
 import { Boundary, CroppedImage, SourceScan } from './types';
 
 const MAX_HISTORY = 50;
@@ -284,6 +284,25 @@ function App() {
     });
   };
 
+  const [apiKeyInput, setApiKeyInput] = useState('');
+  
+  // Set initial API key if defined in env
+  useEffect(() => {
+    const defaultKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+    if (defaultKey) {
+      setApiKeyInput(defaultKey);
+      setApiKey(defaultKey);
+    }
+  }, []);
+
+  const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setApiKeyInput(val);
+    if (val.trim()) {
+      setApiKey(val.trim());
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-900 text-slate-200 p-4 sm:p-6 lg:p-8 font-sans selection:bg-sky-500/30">
       <main className="container mx-auto max-w-7xl">
@@ -294,6 +313,18 @@ function App() {
           <p className="mt-4 text-slate-400 max-w-2xl mx-auto text-lg font-medium leading-relaxed">
             Batch-process old photo scans. Our precision AI automatically isolates, levels, and restores every individual shot.
           </p>
+          <div className="mt-6 flex justify-center">
+            <div className="bg-slate-800/60 p-1.5 rounded-2xl border border-slate-700/50 flex items-center max-w-md w-full shadow-inner">
+              <div className="px-4 text-slate-400 text-sm font-bold uppercase tracking-widest">API Key</div>
+              <input 
+                type="password" 
+                value={apiKeyInput}
+                onChange={handleApiKeyChange}
+                placeholder="Enter Gemini API Key..."
+                className="bg-transparent border-none outline-none text-slate-200 flex-1 px-4 py-2 placeholder-slate-600"
+              />
+            </div>
+          </div>
         </header>
 
         <section className="space-y-10 mb-16">

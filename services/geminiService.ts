@@ -3,12 +3,18 @@ import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 import { Boundary } from '../types';
 
 let aiClient: GoogleGenAI | null = null;
+let dynamicApiKey: string | null = null;
+
+export function setApiKey(key: string) {
+  dynamicApiKey = key;
+  aiClient = new GoogleGenAI({ apiKey: key });
+}
 
 function getAiClient(): GoogleGenAI {
   if (!aiClient) {
-    const key = process.env.API_KEY || process.env.GEMINI_API_KEY;
+    const key = dynamicApiKey || process.env.API_KEY || process.env.GEMINI_API_KEY;
     if (!key) {
-      throw new Error("API_KEY environment variable not set. Please provide it in the environment.");
+      throw new Error("API_KEY not set. Please enter your Gemini API key in the settings.");
     }
     aiClient = new GoogleGenAI({ apiKey: key });
   }
