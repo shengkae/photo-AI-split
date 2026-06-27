@@ -1,0 +1,6 @@
+{
+  "name": "Photo Splitter with AI restoration",
+  "description": "An AI-powered tool to automatically detect, crop, and save individual photos from a single scanned image of multiple photographs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
