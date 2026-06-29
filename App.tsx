@@ -426,7 +426,7 @@ function App() {
         </div>
       </main>
       <footer className="text-center mt-32 text-slate-600 text-sm border-t border-slate-800/50 pt-10 pb-16 font-medium">
-        <p>Built with Gemini 3 Pro & Flash 2.5 • Professional Archival Digitization Pipeline</p>
+        <p>Built with Local Browser Canvas AI • Professional Archival Digitization Pipeline</p>
         <p className="mt-2 opacity-60">Preserving history, one pixel at a time.</p>
       </footer>
     </div>

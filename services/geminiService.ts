@@ -1,107 +1,100 @@
 
-import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 import { Boundary } from '../types';
 
-if (!process.env.API_KEY) {
-  throw new Error("API_KEY environment variable not set");
+function isWhiteRow(y: number, thresh: number, ctx: CanvasRenderingContext2D, width: number) {
+  const d = ctx.getImageData(0, y, width, 1).data;
+  for (let i = 0; i < d.length; i += 4) {
+    if (d[i] < 255 - thresh || d[i+1] < 255 - thresh || d[i+2] < 255 - thresh) return false;
+  }
+  return true;
 }
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+function isWhiteCol(x: number, thresh: number, ctx: CanvasRenderingContext2D, height: number) {
+  const d = ctx.getImageData(x, 0, 1, height).data;
+  for (let i = 0; i < d.length; i += 4) {
+    if (d[i] < 255 - thresh || d[i+1] < 255 - thresh || d[i+2] < 255 - thresh) return false;
+  }
+  return true;
+}
 
-const responseSchema = {
-  type: Type.ARRAY,
-  items: {
-    type: Type.OBJECT,
-    properties: {
-      centerX: {
-        type: Type.NUMBER,
-        description: 'The center X coordinate of the photo as a percentage of image width (0-100). Use up to 2 decimal places.',
-      },
-      centerY: {
-        type: Type.NUMBER,
-        description: 'The center Y coordinate of the photo as a percentage of image height (0-100). Use up to 2 decimal places.',
-      },
-      width: {
-        type: Type.NUMBER,
-        description: 'The full width of the photo print along its own horizontal axis (0-100).',
-      },
-      height: {
-        type: Type.NUMBER,
-        description: 'The full height of the photo print along its own vertical axis (0-100).',
-      },
-      rotation: {
-        type: Type.NUMBER,
-        description: 'The clockwise rotation in degrees (0.0-360.0) required to align the photo edges with the document axes.',
-      }
-    },
-    required: ['centerX', 'centerY', 'width', 'height', 'rotation'],
-  },
-};
+function getSegments(dir: 'h' | 'v', thresh: number, ctx: CanvasRenderingContext2D, width: number, height: number) {
+  const len = dir === 'h' ? height : width;
+  const isWhite = dir === 'h'
+    ? (i: number) => isWhiteRow(i, thresh, ctx, width)
+    : (i: number) => isWhiteCol(i, thresh, ctx, height);
 
-const SYSTEM_INSTRUCTION = `You are a world-class archival digitization specialist. Your task is to identify individual physical photo prints within a single high-resolution scan with microscopic precision.
+  const segments: [number, number][] = [];
+  let inContent = false, segStart = 0;
 
-CRITICAL DETECTION PROTOCOL:
-1. SUBSTRATE IDENTIFICATION: Detect the PHYSICAL PAPER footprint. This includes white margins, scalloped/deckled edges, and the paper backing. Do not crop into the image content if there is a border.
-2. MICROSCOPIC GAP ANALYSIS: In tiled grids where photos touch, look for shadow-lines, texture shifts, and specular highlights. Separate touching prints with 100% accuracy.
-3. RECTILINEAR VERIFICATION: Every print is a perfect rectangle. Verify all four corners. If a photo is tilted, calculate the exact tilt (e.g. 1.25 degrees).
-4. SUB-PIXEL COORDINATES: Use 2 decimal places for all values (centerX, centerY, width, height, rotation) to ensure pixel-perfect alignment.
-5. EXHAUSTIVE SEARCH: Ensure no small polaroids or scraps are missed.
-
-Output strict JSON. Prioritize separation of adjacent items and archival edge preservation.`;
+  for (let i = 0; i < len; i++) {
+    const white = isWhite(i);
+    if (!white && !inContent) { inContent = true; segStart = i; }
+    if (white && inContent)  { inContent = false; segments.push([segStart, i - 1]); }
+  }
+  if (inContent) segments.push([segStart, len - 1]);
+  return segments;
+}
 
 export async function findPhotoBoundaries(imageBase64: string, mimeType: string): Promise<Boundary[]> {
-  try {
-    const response: GenerateContentResponse = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
-      contents: { 
-        parts: [
-          { inlineData: { data: imageBase64, mimeType } },
-          { text: "Perform a deep-space geometric analysis of this scan. Isolate every single physical photo print. Ensure overlapping or touching photos are cleanly separated into individual boxes with their own independent rotation." }
-        ] 
-      },
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
-        responseMimeType: 'application/json',
-        responseSchema: responseSchema,
-        temperature: 0,
-        // Max thinking budget for Pro model to handle complex spatial reasoning and tiled grids
-        thinkingConfig: { thinkingBudget: 32768 },
-      }
-    });
-    
-    const text = response.text;
-    if (!text) throw new Error("Empty response from AI");
-    
-    const boundaries: any[] = JSON.parse(text.trim());
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (!ctx) return reject(new Error('Canvas context not available'));
+      
+      ctx.drawImage(img, 0, 0);
 
-    return boundaries.map((b, i) => ({
-      ...b,
-      id: `boundary-${Date.now()}-${i}`
-    }));
-  } catch (error) {
-    console.error("Gemini Detection Error:", error);
-    throw new Error("Precision detection failed. Please check the scan quality and try again.");
-  }
+      const thresh = 20; // threshold for white detection (0-100)
+      const hSegs = getSegments('h', thresh, ctx, img.width, img.height);
+      const vSegs = getSegments('v', thresh, ctx, img.width, img.height);
+
+      const boundaries: Boundary[] = [];
+      let idx = 0;
+      
+      for (let r = 0; r < hSegs.length; r++) {
+        const [y0, y1] = hSegs[r];
+        const h = y1 - y0 + 1;
+        for (let c = 0; c < vSegs.length; c++) {
+          const [x0, x1] = vSegs[c];
+          const w = x1 - x0 + 1;
+          if (w < 4 || h < 4) continue;
+          
+          boundaries.push({
+            id: `boundary-${Date.now()}-${idx++}`,
+            centerX: ((x0 + x1) / 2 / img.width) * 100,
+            centerY: ((y0 + y1) / 2 / img.height) * 100,
+            width: (w / img.width) * 100,
+            height: (h / img.height) * 100,
+            rotation: 0
+          });
+        }
+      }
+      resolve(boundaries);
+    };
+    img.onerror = () => reject(new Error('Failed to load image for detection'));
+    img.src = `data:${mimeType};base64,${imageBase64}`;
+  });
 }
 
 export async function restorePhoto(imageBase64: string, mimeType: string): Promise<string> {
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
-      contents: {
-        parts: [
-          { inlineData: { data: imageBase64, mimeType } },
-          { text: "Fully restore this photograph. Remove noise, scratches, and stains. Enhance clarity and colors." },
-        ],
-      },
-    });
-
-    const imagePart = response.candidates[0].content.parts.find(p => p.inlineData);
-    if (imagePart?.inlineData?.data) {
-      return `data:image/png;base64,${imagePart.inlineData.data}`;
-    }
-    throw new Error("No image returned");
-  } catch (error) {
-    throw new Error("AI Restoration failed.");
-  }
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return reject(new Error('Canvas context not available'));
+      
+      // Basic local restore using filters (contrast, brightness, saturation)
+      ctx.filter = 'contrast(1.1) brightness(1.05) saturate(1.2)';
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL(mimeType || 'image/png'));
+    };
+    img.onerror = () => reject(new Error('Failed to load image for restoration'));
+    img.src = `data:${mimeType};base64,${imageBase64}`;
+  });
 }
