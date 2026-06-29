@@ -2,24 +2,11 @@
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 import { Boundary } from '../types';
 
-let aiClient: GoogleGenAI | null = null;
-let dynamicApiKey: string | null = null;
-
-export function setApiKey(key: string) {
-  dynamicApiKey = key;
-  aiClient = new GoogleGenAI({ apiKey: key });
+if (!process.env.API_KEY) {
+  throw new Error("API_KEY environment variable not set");
 }
 
-function getAiClient(): GoogleGenAI {
-  if (!aiClient) {
-    const key = dynamicApiKey || process.env.API_KEY || process.env.GEMINI_API_KEY;
-    if (!key) {
-      throw new Error("API_KEY not set. Please enter your Gemini API key in the settings.");
-    }
-    aiClient = new GoogleGenAI({ apiKey: key });
-  }
-  return aiClient;
-}
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const responseSchema = {
   type: Type.ARRAY,
@@ -64,9 +51,8 @@ Output strict JSON. Prioritize separation of adjacent items and archival edge pr
 
 export async function findPhotoBoundaries(imageBase64: string, mimeType: string): Promise<Boundary[]> {
   try {
-    const ai = getAiClient();
     const response: GenerateContentResponse = await ai.models.generateContent({
-      model: 'gemini-3.1-pro-preview',
+      model: 'gemini-3-pro-preview',
       contents: { 
         parts: [
           { inlineData: { data: imageBase64, mimeType } },
@@ -92,18 +78,14 @@ export async function findPhotoBoundaries(imageBase64: string, mimeType: string)
       ...b,
       id: `boundary-${Date.now()}-${i}`
     }));
-  } catch (error: any) {
+  } catch (error) {
     console.error("Gemini Detection Error:", error);
-    if (error.message?.includes("API_KEY environment variable not set")) {
-      throw error;
-    }
     throw new Error("Precision detection failed. Please check the scan quality and try again.");
   }
 }
 
 export async function restorePhoto(imageBase64: string, mimeType: string): Promise<string> {
   try {
-    const ai = getAiClient();
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
       contents: {
@@ -119,11 +101,7 @@ export async function restorePhoto(imageBase64: string, mimeType: string): Promi
       return `data:image/png;base64,${imagePart.inlineData.data}`;
     }
     throw new Error("No image returned");
-  } catch (error: any) {
-    console.error("Gemini Restoration Error:", error);
-    if (error.message?.includes("API_KEY environment variable not set")) {
-      throw error;
-    }
+  } catch (error) {
     throw new Error("AI Restoration failed.");
   }
 }
