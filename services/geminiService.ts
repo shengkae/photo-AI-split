@@ -35,7 +35,14 @@ function getSegments(dir: 'h' | 'v', thresh: number, ctx: CanvasRenderingContext
   return segments;
 }
 
-export async function findPhotoBoundaries(imageBase64: string, mimeType: string): Promise<Boundary[]> {
+export interface DetectOptions {
+  mode: 'auto' | 'manual';
+  thresh: number;
+  rows: number;
+  cols: number;
+}
+
+export async function findPhotoBoundaries(imageBase64: string, mimeType: string, options?: DetectOptions): Promise<Boundary[]> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
@@ -47,9 +54,31 @@ export async function findPhotoBoundaries(imageBase64: string, mimeType: string)
       
       ctx.drawImage(img, 0, 0);
 
-      const thresh = 20; // threshold for white detection (0-100)
-      const hSegs = getSegments('h', thresh, ctx, img.width, img.height);
-      const vSegs = getSegments('v', thresh, ctx, img.width, img.height);
+      const thresh = options?.thresh ?? 20;
+      
+      let hSegs: [number, number][] = [];
+      let vSegs: [number, number][] = [];
+
+      if (options?.mode === 'manual') {
+        const rows = options.rows || 3;
+        const cols = options.cols || 3;
+        
+        for (let i = 0; i < rows; i++) {
+          hSegs.push([
+            Math.round(img.height * i / rows),
+            Math.round(img.height * (i + 1) / rows) - 1
+          ]);
+        }
+        for (let i = 0; i < cols; i++) {
+          vSegs.push([
+            Math.round(img.width * i / cols),
+            Math.round(img.width * (i + 1) / cols) - 1
+          ]);
+        }
+      } else {
+        hSegs = getSegments('h', thresh, ctx, img.width, img.height);
+        vSegs = getSegments('v', thresh, ctx, img.width, img.height);
+      }
 
       const boundaries: Boundary[] = [];
       let idx = 0;

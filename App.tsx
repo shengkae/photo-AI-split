@@ -17,6 +17,11 @@ function App() {
   const [splitImages, setSplitImages] = useState<CroppedImage[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  const [detectMode, setDetectMode] = useState<'auto' | 'manual'>('auto');
+  const [detectThresh, setDetectThresh] = useState<number>(20);
+  const [detectRows, setDetectRows] = useState<number>(3);
+  const [detectCols, setDetectCols] = useState<number>(3);
+
   const activeScan = useMemo(() => 
     scans.find(s => s.id === activeScanId) || null
   , [scans, activeScanId]);
@@ -213,11 +218,16 @@ function App() {
   const handleAutoSplit = async (id: string) => {
     const scan = scans.find(s => s.id === id);
     if (!scan) return;
-    updateScanState(id, { isProcessing: true, statusText: 'Precision AI Analysis...' });
+    updateScanState(id, { isProcessing: true, statusText: 'Detecting boundaries...' });
     setError(null);
     try {
       const base64Data = scan.dataUrl.split(',')[1];
-      const detectedBoundaries = await findPhotoBoundaries(base64Data, scan.file.type);
+      const detectedBoundaries = await findPhotoBoundaries(base64Data, scan.file.type, {
+        mode: detectMode,
+        thresh: detectThresh,
+        rows: detectRows,
+        cols: detectCols
+      });
       
       setScans(prev => prev.map(s => s.id === id ? {
         ...s,
@@ -325,10 +335,65 @@ function App() {
 
               {activeScan && (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  {activeScan.boundaries.length === 0 && (
+                    <div className="flex flex-col gap-6 items-center bg-slate-800/60 p-6 rounded-2xl border border-slate-700/50 mb-6">
+                      <div className="flex flex-wrap gap-6 justify-center w-full max-w-3xl">
+                        <div className="flex flex-col gap-2 min-w-[200px]">
+                          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Detection Mode</label>
+                          <select 
+                            value={detectMode}
+                            onChange={(e) => setDetectMode(e.target.value as 'auto' | 'manual')}
+                            className="bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all"
+                          >
+                            <option value="auto">Auto-detect White Borders</option>
+                            <option value="manual">Manual Grid Split</option>
+                          </select>
+                        </div>
+                        
+                        {detectMode === 'auto' ? (
+                          <div className="flex flex-col gap-2 min-w-[200px]">
+                            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">White Threshold (0-100)</label>
+                            <input 
+                              type="number" 
+                              value={detectThresh}
+                              onChange={(e) => setDetectThresh(Number(e.target.value))}
+                              min="0" max="100"
+                              className="bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex flex-col gap-2 min-w-[120px]">
+                              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Rows</label>
+                              <input 
+                                type="number" 
+                                value={detectRows}
+                                onChange={(e) => setDetectRows(Number(e.target.value))}
+                                min="1" max="20"
+                                className="bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-2 min-w-[120px]">
+                              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Columns</label>
+                              <input 
+                                type="number" 
+                                value={detectCols}
+                                onChange={(e) => setDetectCols(Number(e.target.value))}
+                                min="1" max="20"
+                                className="bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all"
+                              />
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      
+                      <button onClick={() => handleAutoSplit(activeScan.id)} disabled={activeScan.isProcessing} className="px-8 py-4 bg-sky-600 text-white font-black rounded-2xl hover:bg-sky-500 disabled:opacity-50 transition-all flex items-center gap-3 shadow-xl shadow-sky-600/30 border border-sky-400/30 uppercase tracking-widest text-sm">
+                        <MagicWandIcon className="w-6 h-6" /> Detect & Split
+                      </button>
+                    </div>
+                  )}
+
                   <div className="flex flex-wrap gap-4 justify-center items-center">
-                    <button onClick={() => handleAutoSplit(activeScan.id)} disabled={activeScan.isProcessing || activeScan.boundaries.length > 0} className="px-8 py-4 bg-sky-600 text-white font-black rounded-2xl hover:bg-sky-500 disabled:opacity-50 transition-all flex items-center gap-3 shadow-xl shadow-sky-600/30 border border-sky-400/30 uppercase tracking-widest text-sm">
-                      <MagicWandIcon className="w-6 h-6" /> AI Auto-Detect
-                    </button>
                     {activeScan.boundaries.length > 0 && (
                       <>
                         <button onClick={() => handleConfirmAndCrop(activeScan.id)} disabled={activeScan.isProcessing} className="px-8 py-4 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-500 disabled:opacity-50 transition-all flex items-center gap-3 shadow-xl shadow-indigo-600/30 border border-indigo-400/30 uppercase tracking-widest text-sm"><CropIcon className="w-6 h-6" />Straighten & Split</button>
