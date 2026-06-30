@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+export const STANDALONE_HTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -117,7 +117,7 @@
 
     const SparklesIcon = ({ className = "w-5 h-5" }) => (
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
       </svg>
     );
 
@@ -144,7 +144,7 @@
       }
     };
 
-    const SYSTEM_INSTRUCTION = `You are a world-class archival digitization specialist. Your task is to identify individual physical photo prints within a single high-resolution scan with microscopic precision.
+    const SYSTEM_INSTRUCTION = \`You are a world-class archival digitization specialist. Your task is to identify individual physical photo prints within a single high-resolution scan with microscopic precision.
 
 CRITICAL DETECTION PROTOCOL:
 1. SUBSTRATE IDENTIFICATION: Detect the PHYSICAL PAPER footprint. This includes white margins, scalloped/deckled edges, and the paper backing. Do not crop into the image content if there is a border.
@@ -153,7 +153,7 @@ CRITICAL DETECTION PROTOCOL:
 4. SUB-PIXEL COORDINATES: Use 2 decimal places for all values (centerX, centerY, width, height, rotation) to ensure pixel-perfect alignment.
 5. EXHAUSTIVE SEARCH: Ensure no small polaroids or scraps are missed.
 
-Output strict JSON. Prioritize separation of adjacent items and archival edge preservation.`;
+Output strict JSON. Prioritize separation of adjacent items and archival edge preservation.\`;
 
     async function findPhotoBoundaries(imageBase64, mimeType) {
       const apiKey = getApiKey();
@@ -178,7 +178,7 @@ Output strict JSON. Prioritize separation of adjacent items and archival edge pr
       const text = response.text;
       if (!text) throw new Error("Empty response from AI");
       const boundaries = JSON.parse(text.trim());
-      return boundaries.map((b, i) => ({ ...b, id: `boundary-${Date.now()}-${i}` }));
+      return boundaries.map((b, i) => ({ ...b, id: \`boundary-\${Date.now()}-\${i}\` }));
     }
 
     async function restorePhoto(imageBase64, mimeType) {
@@ -196,7 +196,7 @@ Output strict JSON. Prioritize separation of adjacent items and archival edge pr
       });
       const imagePart = response.candidates[0].content.parts.find(p => p.inlineData);
       if (imagePart?.inlineData?.data) {
-        return `data:image/png;base64,${imagePart.inlineData.data}`;
+        return \`data:image/png;base64,\${imagePart.inlineData.data}\`;
       }
       throw new Error("No image returned");
     }
@@ -238,7 +238,7 @@ Output strict JSON. Prioritize separation of adjacent items and archival edge pr
             onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); }}
             onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
             onDrop={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); if (!disabled && e.dataTransfer.files) handleFileChange(e.dataTransfer.files); }}
-            className={`flex justify-center w-full h-64 px-4 transition bg-slate-800 border-2 ${isDragging ? 'border-sky-400' : 'border-slate-600'} border-dashed rounded-md appearance-none cursor-pointer hover:border-slate-400 focus:outline-none`}>
+            className={\`flex justify-center w-full h-64 px-4 transition bg-slate-800 border-2 \${isDragging ? 'border-sky-400' : 'border-slate-600'} border-dashed rounded-md appearance-none cursor-pointer hover:border-slate-400 focus:outline-none\`}>
             <span className="flex flex-col items-center justify-center space-x-2 text-center">
               <UploadIcon className="w-12 h-12 text-slate-500 mx-auto mb-2"/>
               <span className="font-medium text-slate-400">
@@ -332,7 +332,7 @@ Output strict JSON. Prioritize separation of adjacent items and archival edge pr
           const dyPerc = ((e.clientY - startMouseY) / containerRect.height) * 100;
           centerX = Math.max(0, Math.min(100, initialBoundary.centerX + dxPerc));
           centerY = Math.max(0, Math.min(100, initialBoundary.centerY + dyPerc));
-          setReadout(`${centerX.toFixed(1)}%, ${centerY.toFixed(1)}%`);
+          setReadout(\`\${centerX.toFixed(1)}%, \${centerY.toFixed(1)}%\`);
         } else if (handle === 'rotate') {
           const cx = (initialBoundary.centerX / 100) * containerRect.width + containerRect.left;
           const cy = (initialBoundary.centerY / 100) * containerRect.height + containerRect.top;
@@ -341,7 +341,7 @@ Output strict JSON. Prioritize separation of adjacent items and archival edge pr
           rotation = (initialBoundary.rotation + angleDiff) % 360;
           if (rotation < 0) rotation += 360;
           if (Math.abs(rotation % 90) < 3 || Math.abs(rotation % 90) > 87) rotation = Math.round(rotation / 90) * 90;
-          setReadout(`${rotation.toFixed(1)}°`);
+          setReadout(\`\${rotation.toFixed(1)}°\`);
         } else {
           const rad = (rotation * Math.PI) / 180; const cos = Math.cos(rad); const sin = Math.sin(rad);
           const vGlobalX = e.clientX - anchorGlobalX; const vGlobalY = e.clientY - anchorGlobalY;
@@ -368,7 +368,7 @@ Output strict JSON. Prioritize separation of adjacent items and archival edge pr
           else if (handle.includes('t')) localCenterYOffset = -height / 2;
           centerX = ((anchorGlobalX - containerRect.left) / containerRect.width) * 100 + (localCenterXOffset * cos - localCenterYOffset * sin);
           centerY = ((anchorGlobalY - containerRect.top) / containerRect.height) * 100 + (localCenterXOffset * sin + localCenterYOffset * cos);
-          setReadout(`${width.toFixed(1)}% × ${height.toFixed(1)}%`);
+          setReadout(\`\${width.toFixed(1)}% × \${height.toFixed(1)}%\`);
         }
 
         const isSnappedRot = Math.abs(rotation % 90) < 0.1 || Math.abs(rotation % 90) > 89.9;
@@ -406,24 +406,24 @@ Output strict JSON. Prioritize separation of adjacent items and archival edge pr
       return (
         <div ref={containerRef} className="relative w-full max-w-4xl mx-auto border-2 border-slate-700 rounded-xl shadow-2xl overflow-hidden bg-slate-950 group/display cursor-crosshair select-none" onClick={() => onSelectBoundary(null)}>
           <img src={imageUrl} alt="Scanned photos" className="block w-full h-auto select-none opacity-90 transition-opacity group-hover/display:opacity-85" draggable="false" />
-          {activeGuidelines.x?.map((x, i) => <div key={`gx-${x}-${i}`} className="absolute top-0 bottom-0 border-l border-sky-400/60 z-[100] pointer-events-none shadow-[0_0_10px_rgba(56,189,248,0.5)]" style={{ left: `${x}%` }} />)}
-          {activeGuidelines.y?.map((y, i) => <div key={`gy-${y}-${i}`} className="absolute left-0 right-0 border-t border-sky-400/60 z-[100] pointer-events-none shadow-[0_0_10px_rgba(56,189,248,0.5)]" style={{ top: `${y}%` }} />)}
+          {activeGuidelines.x?.map((x, i) => <div key={\`gx-\${x}-\${i}\`} className="absolute top-0 bottom-0 border-l border-sky-400/60 z-[100] pointer-events-none shadow-[0_0_10px_rgba(56,189,248,0.5)]" style={{ left: \`\${x}%\` }} />)}
+          {activeGuidelines.y?.map((y, i) => <div key={\`gy-\${y}-\${i}\`} className="absolute left-0 right-0 border-t border-sky-400/60 z-[100] pointer-events-none shadow-[0_0_10px_rgba(56,189,248,0.5)]" style={{ top: \`\${y}%\` }} />)}
           {boundaries.map((box, index) => {
             const isSelected = box.id === selectedBoundaryId;
             return (
-              <div key={box.id} className={`absolute ${isSelected ? 'border-sky-400 z-30 ring-2 ring-sky-400/40 shadow-[0_0_50px_rgba(56,189,248,0.4)]' : 'border-white/20 hover:border-sky-400/50 hover:bg-sky-400/5 z-10'} border-2 transition-all duration-100`} style={{ left: `${box.centerX}%`, top: `${box.centerY}%`, width: `${box.width}%`, height: `${box.height}%`, transform: `translate(-50%, -50%) rotate(${box.rotation}deg)`, transformOrigin: 'center center' }} onMouseDown={(e) => handleMouseDown(e, box, 'move')}>
-                <div className={`absolute -top-10 -left-1 px-3 py-1.5 text-[10px] font-black tracking-widest uppercase ${isSelected ? 'bg-sky-500 text-white' : 'bg-slate-800 text-slate-400'} rounded-lg shadow-2xl pointer-events-none flex items-center gap-2 whitespace-nowrap z-50 border border-white/10`} style={{ transform: `rotate(${-box.rotation}deg)`, transformOrigin: 'bottom left' }}>
-                  <div className={`w-2 h-2 rounded-full ${isSelected ? 'bg-white animate-pulse' : 'bg-slate-500'}`} />
+              <div key={box.id} className={\`absolute \${isSelected ? 'border-sky-400 z-30 ring-2 ring-sky-400/40 shadow-[0_0_50px_rgba(56,189,248,0.4)]' : 'border-white/20 hover:border-sky-400/50 hover:bg-sky-400/5 z-10'} border-2 transition-all duration-100\`} style={{ left: \`\${box.centerX}%\`, top: \`\${box.centerY}%\`, width: \`\${box.width}%\`, height: \`\${box.height}%\`, transform: \`translate(-50%, -50%) rotate(\${box.rotation}deg)\`, transformOrigin: 'center center' }} onMouseDown={(e) => handleMouseDown(e, box, 'move')}>
+                <div className={\`absolute -top-10 -left-1 px-3 py-1.5 text-[10px] font-black tracking-widest uppercase \${isSelected ? 'bg-sky-500 text-white' : 'bg-slate-800 text-slate-400'} rounded-lg shadow-2xl pointer-events-none flex items-center gap-2 whitespace-nowrap z-50 border border-white/10\`} style={{ transform: \`rotate(\${-box.rotation}deg)\`, transformOrigin: 'bottom left' }}>
+                  <div className={\`w-2 h-2 rounded-full \${isSelected ? 'bg-white animate-pulse' : 'bg-slate-500'}\`} />
                   PRINT #{index + 1 + labelOffset}
                 </div>
                 {isSelected && readout && (
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-900/95 backdrop-blur-2xl px-5 py-2.5 rounded-2xl border border-sky-400/40 text-sky-300 text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap z-[100] shadow-3xl pointer-events-none border-t-sky-400/60" style={{ transform: `translate(-50%, -50%) rotate(${-box.rotation}deg)` }}>
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-900/95 backdrop-blur-2xl px-5 py-2.5 rounded-2xl border border-sky-400/40 text-sky-300 text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap z-[100] shadow-3xl pointer-events-none border-t-sky-400/60" style={{ transform: \`translate(-50%, -50%) rotate(\${-box.rotation}deg)\` }}>
                     {readout} {isShiftDown && <span className="ml-2 text-white/50">• ASPECT LOCKED</span>}
                   </div>
                 )}
                 {isSelected && (
                   <>
-                    <button className="absolute -top-6 -right-6 w-12 h-12 bg-slate-900 border-2 border-red-500/60 text-red-500 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition-all z-[60] shadow-3xl hover:scale-110 active:scale-90 group/del" onMouseDown={(e) => { e.stopPropagation(); onDeleteBoundary(box.id); }} style={{ transform: `rotate(${-box.rotation}deg)` }} title="Remove Box">
+                    <button className="absolute -top-6 -right-6 w-12 h-12 bg-slate-900 border-2 border-red-500/60 text-red-500 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition-all z-[60] shadow-3xl hover:scale-110 active:scale-90 group/del" onMouseDown={(e) => { e.stopPropagation(); onDeleteBoundary(box.id); }} style={{ transform: \`rotate(\${-box.rotation}deg)\` }} title="Remove Box">
                       <TrashIcon className="w-6 h-6 group-hover:rotate-12 transition-transform" />
                     </button>
                     <div className="absolute -top-24 left-1/2 -translate-x-1/2 flex flex-col items-center z-[55]">
@@ -435,7 +435,7 @@ Output strict JSON. Prioritize separation of adjacent items and archival edge pr
                     {HANDLE_NAMES.map(handle => {
                       const pos = { t: 'top-0 left-1/2 -translate-x-1/2 -translate-y-1/2', b: 'bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2', l: 'left-0 top-1/2 -translate-y-1/2 -translate-x-1/2', r: 'right-0 top-1/2 -translate-y-1/2 translate-x-1/2', tl: 'top-0 left-0 -translate-x-1/2 -translate-y-1/2', tr: 'top-0 right-0 translate-x-1/2 -translate-y-1/2', bl: 'bottom-0 left-0 -translate-x-1/2 translate-y-1/2', br: 'bottom-0 right-0 translate-x-1/2 translate-y-1/2' }[handle];
                       const isCorner = handle.length === 2;
-                      return <div key={handle} className={`absolute ${isCorner ? 'w-6 h-6 border-[3px]' : 'w-4 h-4 border-2'} bg-slate-950 border-sky-400 rounded-lg z-[55] ${getCursorClass(handle)} ${pos} hover:scale-125 hover:bg-sky-400 transition-all shadow-xl`} onMouseDown={(e) => handleMouseDown(e, box, handle)} />
+                      return <div key={handle} className={\`absolute \${isCorner ? 'w-6 h-6 border-[3px]' : 'w-4 h-4 border-2'} bg-slate-950 border-sky-400 rounded-lg z-[55] \${getCursorClass(handle)} \${pos} hover:scale-125 hover:bg-sky-400 transition-all shadow-xl\`} onMouseDown={(e) => handleMouseDown(e, box, handle)} />
                     })}
                   </>
                 )}
@@ -484,7 +484,7 @@ Output strict JSON. Prioritize separation of adjacent items and archival edge pr
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {images.map((image, index) => (
               <div key={image.id} className="group relative bg-slate-800 rounded-xl overflow-hidden shadow-md border border-slate-700 hover:border-sky-500/50 transition-all">
-                <div className={`aspect-[3/4] cursor-zoom-in overflow-hidden relative ${image.isRestoring ? 'opacity-50' : ''}`} onClick={() => !image.isRestoring && setPreviewIndex(index)}>
+                <div className={\`aspect-[3/4] cursor-zoom-in overflow-hidden relative \${image.isRestoring ? 'opacity-50' : ''}\`} onClick={() => !image.isRestoring && setPreviewIndex(index)}>
                   <img src={image.dataUrl} alt="Split photo" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                   {image.isRestoring && <div className="absolute inset-0 flex items-center justify-center bg-slate-900/40"><Spinner size={8} /></div>}
                 </div>
@@ -596,7 +596,7 @@ Output strict JSON. Prioritize separation of adjacent items and archival edge pr
 
       const handleImagesUpload = (uploads) => {
         const newScans = uploads.map(u => ({
-          id: `scan-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          id: \`scan-\${Date.now()}-\${Math.random().toString(36).substr(2, 9)}\`,
           dataUrl: u.dataUrl, file: u.file, boundaries: [], isDetected: false, isProcessing: false, statusText: '', history: [], future: []
         }));
         setScans(prev => [...prev, ...newScans]);
@@ -618,7 +618,7 @@ Output strict JSON. Prioritize separation of adjacent items and archival edge pr
             const cropped = boundariesToCrop.map((box, idx) => {
               const canvas = document.createElement('canvas');
               const ctx = canvas.getContext('2d');
-              if (!ctx) return { id: `err-${idx}`, dataUrl: '' };
+              if (!ctx) return { id: \`err-\${idx}\`, dataUrl: '' };
               const pw = (box.width / 100) * image.naturalWidth;
               const ph = (box.height / 100) * image.naturalHeight;
               const pcx = (box.centerX / 100) * image.naturalWidth;
@@ -627,7 +627,7 @@ Output strict JSON. Prioritize separation of adjacent items and archival edge pr
               ctx.translate(pw / 2, ph / 2);
               ctx.rotate((-box.rotation * Math.PI) / 180);
               ctx.drawImage(image, -pcx, -pcy);
-              return { id: `crop-${idx}-${Date.now()}`, dataUrl: canvas.toDataURL('image/png') };
+              return { id: \`crop-\${idx}-\${Date.now()}\`, dataUrl: canvas.toDataURL('image/png') };
             });
             resolve(cropped.filter(img => img.dataUrl));
           };
@@ -665,7 +665,7 @@ Output strict JSON. Prioritize separation of adjacent items and archival edge pr
           const restoredDataUrl = await restorePhoto(base64Data, 'image/png');
           setSplitImages(prev => prev.map(img => img.id === id ? { ...img, dataUrl: restoredDataUrl, isRestoring: false } : img));
         } catch (e) {
-          setError(`Restoration failed: ${e.message}`);
+          setError(\`Restoration failed: \${e.message}\`);
           setSplitImages(prev => prev.map(img => img.id === id ? { ...img, isRestoring: false } : img));
         }
       }, [splitImages]);
@@ -710,7 +710,7 @@ Output strict JSON. Prioritize separation of adjacent items and archival edge pr
       const handleAddBoundary = () => {
         if (!activeScanId || !activeScan) return;
         pushToHistory(activeScanId, activeScan.boundaries);
-        const newB = { id: `m-${Date.now()}`, centerX: 50, centerY: 50, width: 30, height: 40, rotation: 0 };
+        const newB = { id: \`m-\${Date.now()}\`, centerX: 50, centerY: 50, width: 30, height: 40, rotation: 0 };
         setScans(prev => prev.map(s => s.id === activeScanId ? { ...s, boundaries: [...s.boundaries, newB] } : s));
         setSelectedBoundaryId(newB.id);
       };
@@ -723,7 +723,7 @@ Output strict JSON. Prioritize separation of adjacent items and archival edge pr
       };
 
       const downloadImage = (dataUrl, index) => {
-        const link = document.createElement('a'); link.href = dataUrl; link.download = `photo-${index + 1}.png`;
+        const link = document.createElement('a'); link.href = dataUrl; link.download = \`photo-\${index + 1}.png\`;
         document.body.appendChild(link); link.click(); document.body.removeChild(link);
       };
 
@@ -772,7 +772,7 @@ Output strict JSON. Prioritize separation of adjacent items and archival edge pr
 
                   <div className="flex gap-5 overflow-x-auto pb-8 scrollbar-hide mb-8 border-b border-slate-700/40">
                     {scans.map(scan => (
-                      <div key={scan.id} onClick={() => setActiveScanId(scan.id)} className={`relative flex-shrink-0 w-32 h-32 rounded-2xl overflow-hidden cursor-pointer transition-all border-2 ${activeScanId === scan.id ? 'border-sky-400 ring-4 ring-sky-400/20 scale-110 shadow-2xl z-10' : 'border-slate-700 opacity-60 hover:opacity-100 hover:scale-105'}`}>
+                      <div key={scan.id} onClick={() => setActiveScanId(scan.id)} className={\`relative flex-shrink-0 w-32 h-32 rounded-2xl overflow-hidden cursor-pointer transition-all border-2 \${activeScanId === scan.id ? 'border-sky-400 ring-4 ring-sky-400/20 scale-110 shadow-2xl z-10' : 'border-slate-700 opacity-60 hover:opacity-100 hover:scale-105'}\`}>
                         <img src={scan.dataUrl} className="w-full h-full object-cover" alt="Thumb" />
                         {scan.isProcessing && <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center"><Spinner size={8} /></div>}
                       </div>
@@ -838,4 +838,4 @@ Output strict JSON. Prioritize separation of adjacent items and archival edge pr
     root.render(<App />);
   </script>
 </body>
-</html>
+</html>`;

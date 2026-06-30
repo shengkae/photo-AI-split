@@ -5,7 +5,7 @@ import PhotoDisplay from './components/PhotoDisplay';
 import SplitPhotoGallery from './components/SplitPhotoGallery';
 import Spinner from './components/Spinner';
 import { MagicWandIcon, CropIcon, AddIcon, UndoIcon, RedoIcon, RotateIcon } from './components/Icons';
-import { findPhotoBoundaries, restorePhoto } from './services/imageProcessing';
+import { findPhotoBoundaries, restorePhoto } from './services/geminiService';
 import { Boundary, CroppedImage, SourceScan } from './types';
 
 const MAX_HISTORY = 50;

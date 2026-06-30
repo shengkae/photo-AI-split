@@ -1,30 +1,27 @@
 
 import { Boundary } from '../types';
 
-function isWhiteRow(y: number, thresh: number, imgData: ImageData, width: number) {
-  const d = imgData.data;
-  const start = y * width * 4;
-  const end = start + width * 4;
-  for (let i = start; i < end; i += 4) {
+function isWhiteRow(y: number, thresh: number, ctx: CanvasRenderingContext2D, width: number) {
+  const d = ctx.getImageData(0, y, width, 1).data;
+  for (let i = 0; i < d.length; i += 4) {
     if (d[i] < 255 - thresh || d[i+1] < 255 - thresh || d[i+2] < 255 - thresh) return false;
   }
   return true;
 }
 
-function isWhiteCol(x: number, thresh: number, imgData: ImageData, width: number, height: number) {
-  const d = imgData.data;
-  for (let y = 0; y < height; y++) {
-    const idx = (y * width + x) * 4;
-    if (d[idx] < 255 - thresh || d[idx+1] < 255 - thresh || d[idx+2] < 255 - thresh) return false;
+function isWhiteCol(x: number, thresh: number, ctx: CanvasRenderingContext2D, height: number) {
+  const d = ctx.getImageData(x, 0, 1, height).data;
+  for (let i = 0; i < d.length; i += 4) {
+    if (d[i] < 255 - thresh || d[i+1] < 255 - thresh || d[i+2] < 255 - thresh) return false;
   }
   return true;
 }
 
-function getSegments(dir: 'h' | 'v', thresh: number, imgData: ImageData, width: number, height: number) {
+function getSegments(dir: 'h' | 'v', thresh: number, ctx: CanvasRenderingContext2D, width: number, height: number) {
   const len = dir === 'h' ? height : width;
   const isWhite = dir === 'h'
-    ? (i: number) => isWhiteRow(i, thresh, imgData, width)
-    : (i: number) => isWhiteCol(i, thresh, imgData, width, height);
+    ? (i: number) => isWhiteRow(i, thresh, ctx, width)
+    : (i: number) => isWhiteCol(i, thresh, ctx, height);
 
   const segments: [number, number][] = [];
   let inContent = false, segStart = 0;
@@ -49,11 +46,10 @@ export async function findPhotoBoundaries(imageBase64: string, mimeType: string)
       if (!ctx) return reject(new Error('Canvas context not available'));
       
       ctx.drawImage(img, 0, 0);
-      const imgData = ctx.getImageData(0, 0, img.width, img.height);
 
       const thresh = 20; // threshold for white detection (0-100)
-      const hSegs = getSegments('h', thresh, imgData, img.width, img.height);
-      const vSegs = getSegments('v', thresh, imgData, img.width, img.height);
+      const hSegs = getSegments('h', thresh, ctx, img.width, img.height);
+      const vSegs = getSegments('v', thresh, ctx, img.width, img.height);
 
       const boundaries: Boundary[] = [];
       let idx = 0;
