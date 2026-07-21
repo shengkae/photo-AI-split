@@ -288,10 +288,28 @@ function App() {
     document.body.removeChild(link);
   };
 
-  const downloadAllImages = () => {
-    splitImages.forEach((img, index) => {
-      downloadImage(img.dataUrl, index);
-    });
+  const downloadAllImages = async () => {
+    // @ts-ignore
+    if (typeof JSZip === 'undefined') {
+      splitImages.forEach((img, index) => {
+        downloadImage(img.dataUrl, index);
+      });
+      return;
+    }
+
+    // @ts-ignore
+    const zip = new JSZip();
+    for (let i = 0; i < splitImages.length; i++) {
+      const img = splitImages[i];
+      const res = await fetch(img.dataUrl);
+      const blob = await res.blob();
+      zip.file(`photo-${i + 1}.png`, blob);
+    }
+    const out = await zip.generateAsync({ type: 'blob' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(out);
+    a.download = 'photo_ai_split.zip';
+    a.click();
   };
 
   return (

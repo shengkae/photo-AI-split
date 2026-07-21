@@ -24,6 +24,7 @@ const htmlTemplate = `<!DOCTYPE html>
   <title>Photo Splitter AI - Single File Standalone</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script type="importmap">
   {
     "imports": {
